@@ -1,7 +1,33 @@
-.model small
-.code
-main:
-mov ah, 02h
-mov dl, '0'
-int 21h
-end main
+;code from github, just for comparison and learning
+;based on this input-output code i will write a new one
+
+DATA SEGMENT PARA PUBLIC 'DATA'
+MAXLEN DB 20
+LEN DB 0
+MSG DB 20 DUP(?)
+DATA ENDS
+CODE SEGMENT PARA PUBLIC 'CODE'
+START PROC FAR
+ASSUME CS:CODE, DS:DATA
+PUSH DS
+XOR AX, AX
+PUSH AX
+MOV AX,DATA
+MOV DS, AX
+MOV AH, 0AH
+MOV DX, OFFSET MAXLEN
+INT 21H
+MOV DL, 10
+MOV AH, 02H
+INT 21H ;NEW LINE FEED
+MOV AL, LEN
+CBW ; EXTEND AL TO AX
+MOV SI, AX
+MOV MSG+SI, '$'
+MOV AH, 09H
+MOV DX, OFFSET MSG
+INT 21H
+RET
+START ENDP
+CODE ENDS
+END START

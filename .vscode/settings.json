@@ -1,6 +1,8 @@
 {
-    "masmtasm.ASM.mode": "workspace",
+    "masmtasm.ASM.mode": "single file",
     "masmtasm.ASM.actions": {
+
+    
         
 
 
@@ -12,7 +14,7 @@
             "run": [
                 "TASM ${file}",
                 "TLINK ${filename}",
-                ">${filename}"
+                "${filename}"
             ],
             "debug": [
                 "TASM /zi ${file}",
