@@ -7,11 +7,7 @@
 Обчислити значення медіани та вивести десяткове в консоль як рядок (stdout)
 Обчислити середнє значення та вивести десяткове в консоль як рядок (stdout)*/
 import java.util.Scanner;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+
 
 public class ProjectOnJava {
     public static void main (String[] args) {
