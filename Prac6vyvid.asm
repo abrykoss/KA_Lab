@@ -1,5 +1,4 @@
 
-
 DATA SEGMENT PARA PUBLIC 'DATA' ; Start of data segment declaration
 MAXLEN DB 20 ; Declare a byte variable MAXLEN and initialize it to 20
 LEN DB 0 ; Declare a byte variable LEN and initialize it to 0
