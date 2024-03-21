@@ -15,6 +15,7 @@ MOV AX,DATA ; Move the offset of DATA to AX
 MOV DS, AX ; Move the value of AX to DS
 
 CALL ReadInput ; Call the method to read input from the keyboard
+CALL ConvertToBinary ; Call the method to convert the input to binary
 CALL OutputNewLine ; Call the method to output a newline character
 
 CALL AppendNullTerminator ; Call the method to append a null terminator to the input string
@@ -30,6 +31,25 @@ ReadInput PROC NEAR
     INT 21H ; Call interrupt 21H, function 0AH reads a string from the keyboard
     RET
 ReadInput ENDP
+
+ConvertToBinary PROC NEAR
+    MOV CX, 8 ; Set the counter to 8 (for 8 bits)
+    MOV BX, OFFSET MSG ; Move the offset of MSG to BX
+    MOV SI, 0 ; Initialize SI to 0
+
+NextBit:
+    ROL BYTE PTR [BX], 1 ; Rotate the bits of the byte at [BX] to the left
+    PUSHF ; Push the flags onto the stack
+    POP AX ; Pop the flags into AX
+    AND AL, 1 ; Isolate the carry flag (the last bit rotated out)
+    ADD AL, '0' ; Convert the bit to a character ('0' or '1')
+    MOV [BX+SI], AL ; Store the character in the output string
+    INC SI ; Increment SI
+    DEC CX ; Decrement the counter
+    JNZ NextBit ; If the counter is not zero, go to the next bit
+
+    RET
+ConvertToBinary ENDP
 
 OutputNewLine PROC NEAR
     MOV DL, 10 ; Move 10 to DL
