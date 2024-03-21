@@ -2,7 +2,9 @@ DATA SEGMENT PARA PUBLIC 'DATA' ; Start of data segment declaration
 MAXLEN DB 20 ; Declare a byte variable MAXLEN and initialize it to 20
 LEN DB 0 ; Declare a byte variable LEN and initialize it to 0
 MSG DB 20 DUP(?) ; Declare a byte array MSG of size 20, uninitialized
+BIN DB 16 DUP(0) ; Define BIN as a 16-byte array
 DATA ENDS ; End of data segment declaration
+
 
 CODE SEGMENT PARA PUBLIC 'CODE' ; Start of code segment declaration
 START PROC FAR ; Start of procedure START
@@ -20,7 +22,7 @@ CALL OutputNewLine ; Call the method to output a newline character
 
 CALL AppendNullTerminator ; Call the method to append a null terminator to the input string
 
-CALL OutputString ; Call the method to output the string
+CALL OutputBinary ; Call the method to output the string
 
 RET ; Return from procedure
 START ENDP ; End of procedure START
@@ -33,15 +35,15 @@ ReadInput PROC NEAR
 ReadInput ENDP
 
 ConvertToBinary PROC NEAR
-    MOV CX, 8 ; Set the counter to 8 (for 8 bits)
+    MOV CX, 16 ; Set the counter to 16 (for 16 bits)
     MOV BX, OFFSET MSG ; Move the offset of MSG to BX
     MOV SI, 0 ; Initialize SI to 0
 
 NextBit:
-    ROL BYTE PTR [BX], 1 ; Rotate the bits of the byte at [BX] to the left
+    SHL WORD PTR [BX], 1 ; Shift the bits of the word at [BX] to the left
     PUSHF ; Push the flags onto the stack
     POP AX ; Pop the flags into AX
-    AND AL, 1 ; Isolate the carry flag (the last bit rotated out)
+    AND AL, 1 ; Isolate the carry flag (the last bit shifted out)
     ADD AL, '0' ; Convert the bit to a character ('0' or '1')
     MOV [BX+SI], AL ; Store the character in the output string
     INC SI ; Increment SI
@@ -66,10 +68,26 @@ AppendNullTerminator PROC NEAR
     RET
 AppendNullTerminator ENDP
 
+OutputBinary PROC NEAR
+    MOV CX, 16 ; Set the counter to 16 (for 16 bits)
+    MOV BX, OFFSET BIN ; Move the offset of BIN to BX
+    ADD BX, 15 ; Add 15 to BX to start from the end of the array
+
+NextChar:
+    MOV DL, [BX] ; Move the character at [BX] to DL
+    MOV AH, 02H ; Set AH to 02H to prepare for interrupt 21H function 02H (print character)
+    INT 21H ; Call interrupt 21H, function 02H prints a character
+    DEC BX ; Decrement BX to move to the next character
+    DEC CX ; Decrement the counter
+    JNZ NextChar ; If the counter is not zero, go to the next character
+
+    RET
+OutputBinary ENDP
+
 OutputString PROC NEAR
-    MOV AH, 09H ; Set AH to 09H to prepare for interrupt 21H function 09H (output string)
-    MOV DX, OFFSET MSG ; Move the offset of MSG to DX
-    INT 21H ; Call interrupt 21H, function 09H outputs a string
+    MOV AH, 09H ; Set AH to 09H to prepare for interrupt 21H function 09H (print string)
+    MOV DX, OFFSET BIN ; Move the offset of BIN to DX
+    INT 21H ; Call interrupt 21H, function 09H prints a string
     RET
 OutputString ENDP
 
