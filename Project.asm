@@ -22,7 +22,7 @@ CALL OutputNewLine ; Call the method to output a newline character
 
 CALL AppendNullTerminator ; Call the method to append a null terminator to the input string
 
-CALL OutputBinary ; Call the method to output the string
+CALL OutputString ; Call the method to output the string
 
 RET ; Return from procedure
 START ENDP ; End of procedure START
@@ -54,9 +54,9 @@ NextBit:
 ConvertToBinary ENDP
 
 OutputNewLine PROC NEAR
-    MOV DL, 10 ; Move 10 to DL
-    MOV AH, 02H ; Set AH to 02H to prepare for interrupt 21H function 02H (output character)
-    INT 21H ; Call interrupt 21H, function 02H outputs a character (newline in this case)
+    MOV DX, OFFSET MSG ; Move the offset of MSG to DX
+    MOV AH, 09H ; Set AH to 09H to prepare for interrupt 21H function 09H (output string)
+    INT 21H ; Call interrupt 21H, function 09H outputs a string
     RET
 OutputNewLine ENDP
 
@@ -69,18 +69,9 @@ AppendNullTerminator PROC NEAR
 AppendNullTerminator ENDP
 
 OutputBinary PROC NEAR
-    MOV CX, 16 ; Set the counter to 16 (for 16 bits)
-    MOV BX, OFFSET BIN ; Move the offset of BIN to BX
-    ADD BX, 15 ; Add 15 to BX to start from the end of the array
-
-NextChar:
-    MOV DL, [BX] ; Move the character at [BX] to DL
-    MOV AH, 02H ; Set AH to 02H to prepare for interrupt 21H function 02H (print character)
-    INT 21H ; Call interrupt 21H, function 02H prints a character
-    DEC BX ; Decrement BX to move to the next character
-    DEC CX ; Decrement the counter
-    JNZ NextChar ; If the counter is not zero, go to the next character
-
+    MOV DX, OFFSET MSG ; Move the offset of MSG to DX
+    MOV AH, 09H ; Set AH to 09H to prepare for interrupt 21H function 09H (output string)
+    INT 21H ; Call interrupt 21H, function 09H outputs a string
     RET
 OutputBinary ENDP
 
