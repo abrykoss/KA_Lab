@@ -1,7 +1,7 @@
 DATA SEGMENT PARA PUBLIC 'DATA' ; Start of data segment declaration
 MAXLEN DB 20 ; Declare a byte variable MAXLEN and initialize it to 20
 LEN DB 0 ; Declare a byte variable LEN and initialize it to 0
-MSG DB 20 DUP(?) ; Declare a byte array MSG of size 20, uninitialized
+MSG DB 30 DUP(?) ; Declare a byte array MSG of size 20, uninitialized
 BIN DB 16 DUP(0) ; Define BIN as a 16-byte array
 DATA ENDS ; End of data segment declaration
 CODE SEGMENT PARA PUBLIC 'CODE' ; Start of code segment declaration
@@ -12,14 +12,14 @@ XOR AX, AX ; Clear AX register
 PUSH AX ; Push AX onto the stack
 MOV AX,DATA ; Move the offset of DATA to AX
 MOV DS, AX ; Move the value of AX to DS
-CALL ReadInput ; Call the method to read input from the keyboard
-CALL ConvertToBinary ; Call the method to convert the input to binary
+ CALL ReadInput; Call the method to read input from the keyboard
+ ; Call the method to convert the input to binary
 CALL OutputNewLine ; Call the method to output a newline character
 
 CALL AppendNullTerminator ; Call the method to append a null terminator to the input string
-
-CALL OutputBinary ; Call the method to output the string
-CALL OutputString ; Call the method to output the string
+CALL ConvertToNumber ; Call the method to convert the input string to a number
+ CALL ConvertToBinary ; Call the method to convert the number to binary
+ ; Call the method to output the string
 
 RET ; Return from procedure
 START ENDP ; End of procedure START
@@ -48,6 +48,22 @@ NextBit:
 
     RET
 ConvertToBinary ENDP
+
+ConvertToNumber PROC NEAR
+    MOV SI, OFFSET MSG ; Start of the string
+    XOR AX, AX ; Clear AX to store the result
+    XOR BX, BX ; Clear BX to use as a temporary register
+NextDigit:
+    MOV BL, [SI] ; Load the next digit
+    SUB BL, 30H ; Convert from ASCII to number
+   MOV BX, 10 ; Load 10 into BX
+MUL BX ; Multiply AX by BX
+    ADD AX, BX ; Add the new digit
+    INC SI ; Move to the next character
+    CMP BYTE PTR [SI], 0DH ; Check for carriage return (end of input)
+    JNE NextDigit ; If not end of input, process the next digit
+    RET
+ConvertToNumber ENDP
 
 OutputNewLine PROC NEAR
     MOV DL, 10 ; Move 10 to DL
@@ -87,10 +103,10 @@ NextChar:
 OutputBinary ENDP
 
 OutputString PROC NEAR
-    MOV AH, 09H ; Set AH to 09H to prepare for interrupt 21H function 09H (print string)
-    MOV DX, OFFSET BIN ; Move the offset of BIN to DX
-    INT 21H ; Call interrupt 21H, function 09H prints a string
-    RET
+ MOV AH, 09H ; Set AH to 09H to prepare for interrupt 21H function 09H (output string)
+MOV DX, OFFSET MSG ; Move the offset of MSG to DX
+INT 21H ; Call interrupt 21H, function 09H outputs a string
 OutputString ENDP
+
 CODE ENDS ; End of code segment declaration
 END START ; End of program
