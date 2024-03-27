@@ -20,12 +20,12 @@ MOV AX,DATA ; Move the offset of DATA to AX
 MOV DS, AX ; Move the value of AX to DS
 
 
- CALL ReadInput; Call the method to read input from the keyboard
+ CALL ReadInputAsWords; Call the method to read input from the keyboard
 
 CALL OutputNewLine ; Call the method to output a newline character
-CALL ConvertToNumber
 
-CALL CalculateAverage
+
+CALL SortArray
 
  ; Call the method to output the string
 
