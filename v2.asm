@@ -1,12 +1,13 @@
 DATA SEGMENT PARA PUBLIC 'DATA' ; Start of data segment declaration
 
-MAXLEN DB 50 ; Declare a byte variable MAXLEN and initialize it to 20
+MAXLEN DB 100 ; Declare a byte variable MAXLEN and initialize it to 20
 LEN DB 0 ; Declare a byte variable LEN and initialize it to 0
 
 MSG DB 700 DUP(?) ; Declare a byte array MSG of size 20, uninitialized
 BIN DB 16 DUP(0) ; Define BIN as a 16-byte array
-BinaryArray DB 16 DUP(?) ; Declare an array of 16 bytes
+BinaryArray DB 10000 DUP(?) ; Declare an array of 16 bytes
 count DW ? ; Declare a word variable count
+average DW ? ; Declare a word variable average
 DATA ENDS ; End of data segment declaration
 CODE SEGMENT PARA PUBLIC 'CODE' ; Start of code segment declaration
 
@@ -20,14 +21,14 @@ MOV AX,DATA ; Move the offset of DATA to AX
 MOV DS, AX ; Move the value of AX to DS
 
 
- CALL ReadInputAsWords; Call the method to read input from the keyboard
+ CALL ReadInput; Call the method to read input from the keyboard
 
 CALL OutputNewLine ; Call the method to output a newline character
-
-
+CALL ConvertToWords
 CALL SortArray
+CALL CalculateAverage
 
- ; Call the method to output the string
+CALL OutputString
 
 
 
@@ -95,6 +96,7 @@ CalculateAverage PROC
 
     ; The average is now in AX
   MOV DX, AX
+  MOV AX, average
     RET
 CalculateAverage ENDP
 
@@ -154,6 +156,29 @@ SortArray PROC NEAR
 
     ret
 SortArray ENDP
+
+ConvertToWords PROC NEAR
+    MOV SI, OFFSET BinaryArray ; Початкова адреса масиву чисел
+    MOV DI, OFFSET MSG ; Початкова адреса масиву для збереження слів
+    XOR CX, CX ; Очищення лічильника CX
+    MOV BX, OFFSET BIN ; Початкова адреса BIN
+    MOV CX, 16 ; Задання лічильника на 16 біт (16 символів)
+
+ConvertLoopWords:
+    MOV AL, [SI] ; Завантажити байт у AL
+    CMP AL, 0 ; Перевірка, чи досягли ми кінця рядка
+    JE EndWordConversion ; Якщо так, перейти до кінця конвертації
+    ADD AL, '0' ; Конвертувати число у ASCII-символ
+    MOV [DI], AL ; Зберегти символ у вихідний масив
+    INC DI ; Збільшити вказівник на вихідний масив
+    INC CX ; Збільшити лічильник
+    INC SI ; Перейти до наступного числа
+    JMP ConvertLoopWords ; Повторити цикл
+
+EndWordConversion:
+    MOV count, CX ; Оновити значення count з кількістю слів
+    RET
+ConvertToWords ENDP
 
 
 
@@ -277,9 +302,26 @@ NextChar:
 OutputBinary ENDP
 
 OutputString PROC NEAR
- MOV AH, 09H ; Set AH to 09H to prepare for interrupt 21H function 09H (output string)
-MOV DX, OFFSET MSG ; Move the offset of MSG to DX
-INT 21H ; Call interrupt 21H, function 09H outputs a string
+    ; Output the sorted array
+    MOV AH, 09H ; Set AH to 09H to prepare for interrupt 21H function 09H (output string)
+    MOV DX, OFFSET MSG ; Move the offset of MSG to DX
+    INT 21H ; Call interrupt 21H, function 09H outputs a string
+
+    ; Output a newline character
+    CALL OutputNewLine
+
+    ; Output the average value
+    MOV AH, 02H ; Set AH to 02H to prepare for interrupt 21H function 02H (output character)
+    MOV DL, 'A' ; Output 'A' for Average
+    INT 21H ; Call interrupt 21H, function 02H outputs a character
+    MOV AX, DX ; Move the value of DX (average) to AX
+   
+
+    RET
 OutputString ENDP
+
+
+
+
 CODE ENDS ; End of code segment declaration
 END START ; End of program
