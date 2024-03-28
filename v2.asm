@@ -5,6 +5,7 @@ LEN DB 0 ; Declare a byte variable LEN and initialize it to 0
 
 MSG DB 700 DUP(?) ; Declare a byte array MSG of size 20, uninitialized
 BIN DB 16 DUP(0) ; Define BIN as a 16-byte array
+ConvertedNumbers DB 100 DUP(?) ; Declare an array of 100 bytes to store converted numbers
 BinaryArray DB 10000 DUP(?) ; Declare an array of 16 bytes
 count DW ? ; Declare a word variable count
 average DW ? ; Declare a word variable average
@@ -23,10 +24,9 @@ MOV DS, AX ; Move the value of AX to DS
 
  CALL ReadInput; Call the method to read input from the keyboard
 CALL AppendNullTerminator
-CALL OutputNewLine ; Call the method to output a newline character
-CALL ConvertToWords
-CALL SortArray
-CALL CalculateAverage
+
+
+CALL OutputNewLine
 CALL OutputString
 
 
@@ -39,11 +39,76 @@ START ENDP ; End of procedure START
 
 
 ReadInput PROC NEAR
-    MOV AH, 0AH ; Set AH to 0AH to prepare for interrupt 21H function 0AH (buffered input)
-    MOV DX, OFFSET MAXLEN ; Move the offset of MAXLEN to DX
-    INT 21H ; Call interrupt 21H, function 0AH reads a string from the keyboard
-    RET
+    ; Function: Read from file or device
+    mov ah, 3Fh
+    ; File handle 00h for standard input (keyboard)
+    mov bx, 00h
+    ; Maximum number of bytes to read
+    mov cx, 100
+    ; Pointer to buffer
+    lea dx, MSG
+    ; Call interrupt
+    int 21h
+
+    ; Initialize SI to point to the start of the MSG buffer
+    lea si, MSG
+
+    ; Initialize DI to point to the start of the converted numbers buffer
+    lea di, ConvertedNumbers
+
+    ; Initialize CX to the length of the input
+    mov cx, 100
+
+ConvertLoop:
+    ; Check if we've processed all characters
+    cmp cx, 0
+    je EndLoop
+
+    ; Load the current character into AL
+    lodsb
+
+    ; Check if the character is a digit
+    cmp al, '0'
+    jl NotADigit
+    cmp al, '9'
+    jg NotADigit
+
+    ; Subtract '0' to convert the character to a number
+    sub al, '0'
+
+    ; Multiply the current number by 10
+    mov bl, [di]
+    mov al, 10
+    mul bl
+
+    ; Store the multiplied number back
+    mov [di], ax
+
+    ; Add the new digit to the current number
+    add [di], al
+
+    ; Decrement CX
+    dec cx
+
+    ; Continue with the next character
+    jmp ConvertLoop
+
+NotADigit:
+    ; Move to the next number
+    inc di
+
+    ; Decrement CX
+    dec cx
+
+    ; Continue with the next character
+    jmp ConvertLoop
+
+EndLoop:
+    ret
 ReadInput ENDP
+
+
+
 
 CalculateAverage PROC
     ; Initialize AX and BX to 0
@@ -120,23 +185,27 @@ ConvertToBinary ENDP
 SortArray PROC NEAR
     ; Initialize outer loop counter
     XOR CX, CX ; Clear CX
-      mov cx, word ptr count
+    mov cx, word ptr count
     dec cx  ; count-1
 outerLoop:
     push cx
     lea si, MSG
+    xor dx, dx ; flag to check if any swap happened
 innerLoop:
     mov ax, [si]
     cmp ax, [si+2]
     jl nextStep
     xchg [si+2], ax
     mov [si], ax
+    inc dx ; increment dx if a swap happened
 nextStep:
     add si, 2
     loop innerLoop
+    cmp dx, 0 ; check if any swap happened
+    je sorted ; if no swap happened, array is sorted
     pop cx
     loop outerLoop
-
+sorted:
     ret
 SortArray ENDP
 
@@ -163,33 +232,6 @@ EndWordConversion:
     RET
 ConvertToWords ENDP
 
-
-
-ReadInputAsWords PROC NEAR
-    MOV AH, 0AH ; Set AH to 0AH to prepare for interrupt 21H function 0AH (buffered input)
-    MOV DX, OFFSET MAXLEN ; Move the offset of MAXLEN to DX
-    INT 21H ; Call interrupt 21H, function 0AH reads a string from the keyboard
-
-    ; Start of conversion code
-    MOV SI, OFFSET MSG ; Load the address of the input buffer into SI
-    MOV DI, OFFSET BinaryArray ; Load the address of the output buffer into DI
-    XOR CX, CX ; Clear CX to use it as a counter
-
-    ConvertLoop:
-        LODSB ; Load the byte at address SI into AL and increment SI
-        CMP AL, 0 ; Check if we've reached the end of the string
-        JE EndConversion ; If we have, jump to the end of the conversion code
-        SUB AL, '0' ; Convert the ASCII digit to a number
-        MOV [DI], AL ; Store the number in the output buffer
-        INC DI ; Increment DI
-        INC CX ; Increment the counter
-        JMP ConvertLoop ; Repeat the loop
-
-    EndConversion:
-        MOV count, CX ; Update count with the number of elements entered
-    ; Here you can call your sorting algorithm
-    RET
-ReadInputAsWords ENDP
 
 ConvertToNumber PROC NEAR
     MOV SI, OFFSET MSG ; Start of the string
@@ -241,10 +283,6 @@ ConvertToNumber ENDP
 
 
 
-
-
-
-
 OutputNewLine PROC NEAR
     MOV DL, 10 ; Move 10 to DL
     MOV AH, 02H ; Set AH to 02H to prepare for interrupt 21H function 02H (output character)
@@ -285,7 +323,7 @@ NextChar:
 OutputBinary ENDP
 
 OutputString PROC NEAR
-    MOV AH, 09H ; Set AH to 09H to prepare for interrupt 21H function 09H (output string)
+    MOV AH, 02H ; Set AH to 09H to prepare for interrupt 21H function 09H (output string)
     MOV DX, OFFSET MSG ; Move the offset of MSG to DX
     INT 21H ; Call interrupt 21H, function 09H outputs a string
     RET
