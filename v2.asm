@@ -22,12 +22,11 @@ MOV DS, AX ; Move the value of AX to DS
 
 
  CALL ReadInput; Call the method to read input from the keyboard
-
+CALL AppendNullTerminator
 CALL OutputNewLine ; Call the method to output a newline character
 CALL ConvertToWords
 CALL SortArray
 CALL CalculateAverage
-
 CALL OutputString
 
 
@@ -120,39 +119,23 @@ ConvertToBinary ENDP
 
 SortArray PROC NEAR
     ; Initialize outer loop counter
-    mov cx, word ptr count
-    inc cx
-
-    ; Outer loop
-    outerLoop:
-        push cx ; Save the outer loop counter
-
-        ; Initialize inner loop counter and array pointer
-        mov dx, cx ; Copy the outer loop counter to dx for the inner loop
-        lea si, MSG
-
-        ; Inner loop
-        innerLoop:
-            mov ax, [si] ; Load the current element
-            mov bx, [si+2] ; Load the next element
-
-            ; Compare elements
-            cmp ax, bx
-            jl nextPair ; If the current element is less than the next element, move to the next pair
-
-            ; Swap elements if necessary
-            xchg ax, bx
-            mov [si], ax
-            mov [si+2], bx
-
-        nextPair:
-            add si, 2 ; Move to the next pair of elements
-            dec dx ; Decrement dx instead of using loop
-            jnz innerLoop ; Jump to innerLoop if dx is not zero
-
-        pop cx ; Restore the outer loop counter
-        dec cx ; Decrement cx instead of using loop
-        jnz outerLoop ; Jump to outerLoop if cx is not zero
+    XOR CX, CX ; Clear CX
+      mov cx, word ptr count
+    dec cx  ; count-1
+outerLoop:
+    push cx
+    lea si, MSG
+innerLoop:
+    mov ax, [si]
+    cmp ax, [si+2]
+    jl nextStep
+    xchg [si+2], ax
+    mov [si], ax
+nextStep:
+    add si, 2
+    loop innerLoop
+    pop cx
+    loop outerLoop
 
     ret
 SortArray ENDP
@@ -302,21 +285,9 @@ NextChar:
 OutputBinary ENDP
 
 OutputString PROC NEAR
-    ; Output the sorted array
     MOV AH, 09H ; Set AH to 09H to prepare for interrupt 21H function 09H (output string)
     MOV DX, OFFSET MSG ; Move the offset of MSG to DX
     INT 21H ; Call interrupt 21H, function 09H outputs a string
-
-    ; Output a newline character
-    CALL OutputNewLine
-
-    ; Output the average value
-    MOV AH, 02H ; Set AH to 02H to prepare for interrupt 21H function 02H (output character)
-    MOV DL, 'A' ; Output 'A' for Average
-    INT 21H ; Call interrupt 21H, function 02H outputs a character
-    MOV AX, DX ; Move the value of DX (average) to AX
-   
-
     RET
 OutputString ENDP
 
