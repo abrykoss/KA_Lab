@@ -23,6 +23,7 @@ MOV DS, AX ; Move the value of AX to DS
 
 
  CALL ReadInput; Call the method to read input from the keyboard
+
 CALL AppendNullTerminator
 
 
@@ -76,6 +77,9 @@ ConvertLoop:
     ; Subtract '0' to convert the character to a number
     sub al, '0'
 
+    ; Add the new digit to the current number
+    add [di], al
+
     ; Multiply the current number by 10
     mov bl, [di]
     mov al, 10
@@ -83,9 +87,6 @@ ConvertLoop:
 
     ; Store the multiplied number back
     mov [di], ax
-
-    ; Add the new digit to the current number
-    add [di], al
 
     ; Decrement CX
     dec cx
@@ -233,56 +234,6 @@ EndWordConversion:
 ConvertToWords ENDP
 
 
-ConvertToNumber PROC NEAR
-    MOV SI, OFFSET MSG ; Start of the string
-    XOR AX, AX ; Clear AX to store the result
-    XOR BX, BX ; Clear BX to use as a temporary register
-    XOR CX, CX ; Clear CX to use as a counter
-    MOV DL, [SI] ; Load the first character
-
-    ; Check for negative sign
-    CMP DL, '-' 
-    JE HandleNegativeNumber 
-
-    ; Handle positive numbers
-    NextDigit_Positive:
-        CMP DL, '0' ; Check if it's a valid digit
-        JB ConvertComplete ; If not, conversion is complete
-        CMP DL, '9' ; Check if it's a valid digit
-        JA ConvertComplete ; If not, conversion is complete
-        SUB DL, '0' ; Convert ASCII digit to numeric value
-        SHL AX, 1 ; Shift existing value in AX left by one digit place (effectively multiplying by 10)
-        ADD AX, DX ; Add new digit to AX
-        INC SI ; Move to the next character
-        MOV DL, [SI] ; Load the next character
-        INC CX ; Increment the digit count
-        JMP NextDigit_Positive
-
-    ; Handle negative numbers
-    HandleNegativeNumber:
-        INC SI ; Move past the negative sign
-        MOV DL, [SI] ; Load the next character
-
-    NextDigit_Negative:
-        CMP DL, '0' ; Check if it's a valid digit
-        JB ConvertComplete ; If not, conversion is complete
-        CMP DL, '9' ; Check if it's a valid digit
-        JA ConvertComplete ; If not, conversion is complete
-        SUB DL, '0' ; Convert ASCII digit to numeric value
-        SHL AX, 1 ; Shift existing value in AX left by one digit place (effectively multiplying by 10)
-        SUB AX, DX ; Subtract new digit from AX
-        INC SI ; Move to the next character
-        MOV DL, [SI] ; Load the next character
-        INC CX ; Increment the digit count
-        JMP NextDigit_Negative
-
-    ConvertComplete:
-    RET
-ConvertToNumber ENDP
-
-
-
-
 OutputNewLine PROC NEAR
     MOV DL, 10 ; Move 10 to DL
     MOV AH, 02H ; Set AH to 02H to prepare for interrupt 21H function 02H (output character)
@@ -324,7 +275,7 @@ OutputBinary ENDP
 
 OutputString PROC NEAR
     MOV AH, 02H ; Set AH to 09H to prepare for interrupt 21H function 09H (output string)
-    MOV DX, OFFSET MSG ; Move the offset of MSG to DX
+    lea dx, MSG ; Move the offset of MSG to DX
     INT 21H ; Call interrupt 21H, function 09H outputs a string
     RET
 OutputString ENDP
