@@ -24,7 +24,7 @@ CALL AppendNullTerminator
 
 CALL ConvertToWords
 
-CALL SortArray
+
 CALL OutputNewLine ; Call the method to output a newline character
 
 
